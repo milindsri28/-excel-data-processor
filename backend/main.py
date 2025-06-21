@@ -25,7 +25,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Local development
         "https://*.onrender.com", # Render frontend
-        "https://*.netlify.app",  # Netlify frontend
+        "https://*.netlify.app",  # Netlify frontend (all subdomains)
+        "https://creative-puffpuff-5a6348.netlify.app",  # Specific Netlify URL
         "https://*.vercel.app",   # Vercel frontend
         "https://*.railway.app",  # Railway frontend
     ],
