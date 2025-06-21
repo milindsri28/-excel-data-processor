@@ -24,10 +24,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Local development
-        "https://*.railway.app",  # Railway frontend
+        "https://*.onrender.com", # Render frontend
         "https://*.netlify.app",  # Netlify frontend
         "https://*.vercel.app",   # Vercel frontend
-        "https://*.onrender.com", # Render frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
