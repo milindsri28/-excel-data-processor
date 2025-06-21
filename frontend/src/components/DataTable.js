@@ -37,7 +37,7 @@ const DataTable = ({ data, loading }) => {
         canNextPage,
         canPreviousPage,
         pageOptions,
-        state: { pageIndex, pageSize },
+        state: { pageIndex },
         setGlobalFilter,
     } = useTable(
         {
