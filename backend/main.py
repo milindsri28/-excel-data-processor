@@ -27,6 +27,7 @@ app.add_middleware(
         "https://*.onrender.com", # Render frontend
         "https://*.netlify.app",  # Netlify frontend (all subdomains)
         "https://creative-puffpuff-5a6348.netlify.app",  # Specific Netlify URL
+        "https://excel-data-viewerr.netlify.app",  # New Netlify URL
         "https://*.vercel.app",   # Vercel frontend
         "https://*.railway.app",  # Railway frontend
     ],
