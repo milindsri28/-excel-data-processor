@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 import json
 from typing import List, Dict, Any
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -55,6 +56,9 @@ except ValueError:
 # Get database reference
 db_ref = db.reference()
 
+# Session management
+active_sessions = {}
+
 def sanitize_column_name(column_name):
     """Sanitize column names for Firebase compatibility"""
     if not column_name:
@@ -93,6 +97,20 @@ def serialize_data(data):
         return None
     else:
         return data
+
+def cleanup_expired_sessions():
+    """Clean up expired sessions"""
+    current_time = datetime.now()
+    expired_sessions = []
+    
+    for session_id, session_data in active_sessions.items():
+        if current_time - session_data['created_at'] > timedelta(hours=24):  # 24 hour expiry
+            expired_sessions.append(session_id)
+    
+    for session_id in expired_sessions:
+        # Clear data for expired session
+        db_ref.child(f'sessions/{session_id}').delete()
+        del active_sessions[session_id]
 
 @app.get("/")
 async def root():
@@ -134,15 +152,28 @@ async def upload_excel(file: UploadFile = File(...)):
         data = df.to_dict('records')
         serialized_data = serialize_data(data)
         
-        # Store in Firebase
+        # Generate session ID for this upload
+        session_id = str(uuid.uuid4())
+        active_sessions[session_id] = {
+            'created_at': datetime.now(),
+            'rows_count': len(serialized_data) if serialized_data else 0
+        }
+        
+        # Store in Firebase with session tracking
         db_ref.child('excel_data').set(serialized_data)
         db_ref.child('column_mapping').set(column_mapping)
+        db_ref.child('current_session').set({
+            'session_id': session_id,
+            'created_at': datetime.now().isoformat(),
+            'rows_count': len(serialized_data) if serialized_data else 0
+        })
         
         return {
             "message": "Data uploaded successfully",
             "rows_processed": len(serialized_data) if serialized_data else 0,
             "columns": original_columns,
-            "sanitized_columns": sanitized_columns
+            "sanitized_columns": sanitized_columns,
+            "session_id": session_id
         }
         
     except Exception as e:
@@ -154,6 +185,9 @@ async def get_data():
     Retrieve all data from Firebase
     """
     try:
+        # Clean up expired sessions first
+        cleanup_expired_sessions()
+        
         data = db_ref.child('excel_data').get()
         column_mapping = db_ref.child('column_mapping').get()
         
@@ -215,12 +249,66 @@ async def clear_data():
     Clear all data from Firebase
     """
     try:
+        # Clean up expired sessions first
+        cleanup_expired_sessions()
+        
+        # Clear all data
         db_ref.child('excel_data').delete()
         db_ref.child('column_mapping').delete()
+        db_ref.child('current_session').delete()
+        
+        # Clear active sessions
+        active_sessions.clear()
+        
         return {"message": "All data cleared successfully"}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing data: {str(e)}")
+
+@app.post("/session/clear")
+async def clear_session_data():
+    """
+    Clear data for current session (called when website is closed)
+    """
+    try:
+        # Get current session
+        current_session = db_ref.child('current_session').get()
+        
+        if current_session and isinstance(current_session, dict):
+            session_id = current_session.get('session_id')
+            if session_id and session_id in active_sessions:
+                del active_sessions[session_id]
+        
+        # Clear all data
+        db_ref.child('excel_data').delete()
+        db_ref.child('column_mapping').delete()
+        db_ref.child('current_session').delete()
+        
+        return {"message": "Session data cleared successfully"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing session data: {str(e)}")
+
+@app.get("/sessions/active")
+async def get_active_sessions():
+    """
+    Get information about active sessions
+    """
+    try:
+        cleanup_expired_sessions()
+        
+        session_info = []
+        for session_id, session_data in active_sessions.items():
+            session_info.append({
+                'session_id': session_id,
+                'created_at': session_data['created_at'].isoformat(),
+                'rows_count': session_data['rows_count']
+            })
+        
+        return {"active_sessions": session_info, "count": len(session_info)}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving session info: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

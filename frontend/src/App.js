@@ -36,6 +36,36 @@ function App() {
         fetchData();
     }, []);
 
+    // Clear data when website is closed/refreshed
+    useEffect(() => {
+        const handleBeforeUnload = async () => {
+            try {
+                // Clear session data from Firebase when user leaves the page
+                await axios.post(`${API_BASE_URL}/session/clear`);
+                console.log('Session data cleared on page unload');
+            } catch (error) {
+                console.error('Error clearing session data on unload:', error);
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                // Page is being hidden (user is leaving)
+                handleBeforeUnload();
+            }
+        };
+
+        // Add event listeners
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Cleanup event listeners
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
     // Handle file upload
     const handleFileUpload = async (file) => {
         setLoading(true);
@@ -85,6 +115,7 @@ function App() {
                 <header className="text-center mb-4">
                     <h1 className="display-4 text-primary">📊 Excel Data Viewer</h1>
                     <p className="lead">Upload Excel files and view your data in a beautiful interface</p>
+                    <small className="text-muted">💡 Data will be automatically cleared when you close the page</small>
                 </header>
 
                 {/* File Upload Section */}
@@ -135,6 +166,11 @@ function App() {
                             <p className="text-muted">
                                 Upload an Excel file to get started. The data will appear here once uploaded.
                             </p>
+                            <div className="mt-3">
+                                <small className="text-info">
+                                    💡 Try uploading one of the sample files: employee, sales, inventory, student, customer, weather, or simple data
+                                </small>
+                            </div>
                         </div>
                     </div>
                 )}
