@@ -27,6 +27,7 @@ app.add_middleware(
         "https://*.railway.app",  # Railway frontend
         "https://*.netlify.app",  # Netlify frontend
         "https://*.vercel.app",   # Vercel frontend
+        "https://*.onrender.com", # Render frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
