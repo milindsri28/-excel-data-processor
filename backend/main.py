@@ -135,6 +135,34 @@ async def root():
     """Root endpoint"""
     return {"message": "Excel Data Processor API", "version": "1.0.0"}
 
+@app.get("/debug")
+async def debug_info():
+    """Debug endpoint to check environment variables and Firebase status"""
+    try:
+        firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
+        firebase_database_url = os.getenv('FIREBASE_DATABASE_URL')
+        
+        # Test Firebase connection
+        test_data = db_ref.child('test').get()
+        
+        return {
+            "firebase_service_account_set": bool(firebase_service_account),
+            "firebase_database_url_set": bool(firebase_database_url),
+            "firebase_database_url": firebase_database_url,
+            "firebase_connection_test": "success" if test_data is not None else "failed",
+            "environment_variables": {
+                "FIREBASE_SERVICE_ACCOUNT_length": len(firebase_service_account) if firebase_service_account else 0,
+                "FIREBASE_DATABASE_URL": firebase_database_url
+            }
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "firebase_service_account_set": bool(os.getenv('FIREBASE_SERVICE_ACCOUNT')),
+            "firebase_database_url_set": bool(os.getenv('FIREBASE_DATABASE_URL')),
+            "firebase_database_url": os.getenv('FIREBASE_DATABASE_URL')
+        }
+
 @app.post("/upload-excel")
 async def upload_excel(file: UploadFile = File(...)):
     """
