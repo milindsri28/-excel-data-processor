@@ -67,12 +67,25 @@ except ValueError:
             "Set it to your Firebase Realtime Database URL (e.g., https://your-project-id.firebaseio.com)"
         )
     
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': firebase_database_url
-    })
+    try:
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': firebase_database_url
+        })
+        print(f"Firebase initialized successfully with database URL: {firebase_database_url}")
+    except Exception as e:
+        print(f"Error initializing Firebase: {str(e)}")
+        raise e
 
 # Get database reference
-db_ref = db.reference()
+try:
+    db_ref = db.reference()
+    # Test the connection
+    test_result = db_ref.child('test_connection').get()
+    print("Firebase database connection successful")
+except Exception as e:
+    print(f"Error connecting to Firebase database: {str(e)}")
+    # Create a mock database reference for development
+    db_ref = None
 
 # Session management
 active_sessions = {}
@@ -118,6 +131,9 @@ def serialize_data(data):
 
 def cleanup_expired_sessions():
     """Clean up expired sessions"""
+    if not db_ref:
+        return
+        
     current_time = datetime.now()
     expired_sessions = []
     
@@ -168,6 +184,9 @@ async def upload_excel(file: UploadFile = File(...)):
     """
     Upload and process Excel file
     """
+    if not db_ref:
+        raise HTTPException(status_code=500, detail="Firebase database not available")
+        
     if not file or not file.filename or not file.filename.endswith(('.xlsx', '.xls')):
         raise HTTPException(status_code=400, detail="Only Excel files are allowed")
     
@@ -230,6 +249,9 @@ async def get_data():
     """
     Retrieve all data from Firebase
     """
+    if not db_ref:
+        raise HTTPException(status_code=500, detail="Firebase database not available")
+        
     try:
         # Clean up expired sessions first
         cleanup_expired_sessions()
@@ -294,11 +316,10 @@ async def clear_data():
     """
     Clear all data from Firebase
     """
-    try:
-        # Clean up expired sessions first
-        cleanup_expired_sessions()
+    if not db_ref:
+        raise HTTPException(status_code=500, detail="Firebase database not available")
         
-        # Clear all data
+    try:
         db_ref.child('excel_data').delete()
         db_ref.child('column_mapping').delete()
         db_ref.child('current_session').delete()
@@ -307,54 +328,54 @@ async def clear_data():
         active_sessions.clear()
         
         return {"message": "All data cleared successfully"}
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing data: {str(e)}")
 
 @app.post("/session/clear")
 async def clear_session_data():
     """
-    Clear data for current session (called when website is closed)
+    Clear session data from Firebase
     """
+    if not db_ref:
+        raise HTTPException(status_code=500, detail="Firebase database not available")
+        
     try:
-        # Get current session
-        current_session = db_ref.child('current_session').get()
-        
-        if current_session and isinstance(current_session, dict):
-            session_id = current_session.get('session_id')
-            if session_id and session_id in active_sessions:
-                del active_sessions[session_id]
-        
-        # Clear all data
         db_ref.child('excel_data').delete()
         db_ref.child('column_mapping').delete()
         db_ref.child('current_session').delete()
         
-        return {"message": "Session data cleared successfully"}
+        # Clear active sessions
+        active_sessions.clear()
         
+        return {"message": "Session data cleared successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing session data: {str(e)}")
 
 @app.get("/sessions/active")
 async def get_active_sessions():
     """
-    Get information about active sessions
+    Get active sessions
     """
+    if not db_ref:
+        raise HTTPException(status_code=500, detail="Firebase database not available")
+        
     try:
+        # Clean up expired sessions first
         cleanup_expired_sessions()
         
-        session_info = []
-        for session_id, session_data in active_sessions.items():
-            session_info.append({
-                'session_id': session_id,
-                'created_at': session_data['created_at'].isoformat(),
-                'rows_count': session_data['rows_count']
-            })
-        
-        return {"active_sessions": session_info, "count": len(session_info)}
-        
+        return {
+            "active_sessions": len(active_sessions),
+            "sessions": [
+                {
+                    "session_id": session_id,
+                    "created_at": session_data['created_at'].isoformat(),
+                    "rows_count": session_data['rows_count']
+                }
+                for session_id, session_data in active_sessions.items()
+            ]
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving session info: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving sessions: {str(e)}")
 
 # For Vercel serverless deployment
 if __name__ == "__main__":
