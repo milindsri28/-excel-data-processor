@@ -13,7 +13,7 @@ const DataTable = ({ data, loading }) => {
             accessor: key,
             Cell: ({ value }) => {
                 if (typeof value === 'boolean') {
-                    return value ? '✅ Yes' : '❌ No';
+                    return value ? 'Yes' : 'No';
                 }
                 if (value instanceof Date) {
                     return value.toLocaleDateString();
@@ -72,7 +72,7 @@ const DataTable = ({ data, loading }) => {
             <div className="row mb-3">
                 <div className="col-md-6">
                     <div className="input-group">
-                        <span className="input-group-text">🔍</span>
+                        <span className="input-group-text">Search</span>
                         <input
                             type="text"
                             className="form-control"
@@ -119,7 +119,7 @@ const DataTable = ({ data, loading }) => {
                                         {column.render('Header')}
                                         <span className="ms-1">
                                             {column.isSorted ? (
-                                                column.isSortedDesc ? ' 🔽' : ' 🔼'
+                                                column.isSortedDesc ? ' (Desc)' : ' (Asc)'
                                             ) : ''}
                                         </span>
                                     </th>

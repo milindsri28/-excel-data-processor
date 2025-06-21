@@ -112,14 +112,14 @@ function App() {
         <div className="App">
             <div className="container">
                 <header className="text-center mb-4">
-                    <h1 className="display-4 text-primary">📊 Excel Data Viewer</h1>
+                    <h1 className="display-4 text-primary">Excel Data Viewer</h1>
                     <p className="lead">Upload Excel files and view your data in a beautiful interface</p>
-                    <small className="text-muted">💡 Data will be automatically cleared when you close the page</small>
+                    <small className="text-muted">Data will be automatically cleared when you close the page</small>
                 </header>
 
                 {/* File Upload Section */}
                 <div className="card">
-                    <h3>📁 Upload Excel File</h3>
+                    <h3>Upload Excel File</h3>
                     <FileUpload onFileUpload={handleFileUpload} loading={loading} />
                 </div>
 
@@ -144,13 +144,13 @@ function App() {
                 {data.length > 0 && (
                     <div className="card">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h3>📋 Data Table</h3>
+                            <h3>Data Table</h3>
                             <button
                                 className="btn btn-outline-danger"
                                 onClick={handleClearData}
                                 disabled={loading}
                             >
-                                🗑️ Clear All Data
+                                Clear All Data
                             </button>
                         </div>
                         <DataTable data={data} loading={loading} />
@@ -161,13 +161,13 @@ function App() {
                 {!loading && data.length === 0 && (
                     <div className="card text-center">
                         <div className="py-5">
-                            <h4>📊 No Data Available</h4>
+                            <h4>No Data Available</h4>
                             <p className="text-muted">
                                 Upload an Excel file to get started. The data will appear here once uploaded.
                             </p>
                             <div className="mt-3">
                                 <small className="text-info">
-                                    💡 Try uploading one of the sample files: employee, sales, inventory, student, customer, weather, or simple data
+                                    Try uploading one of the sample files: employee, sales, inventory, student, customer, weather, or simple data
                                 </small>
                             </div>
                         </div>
