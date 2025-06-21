@@ -41,17 +41,34 @@ try:
 except ValueError:
     # Initialize Firebase with service account
     firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
+    firebase_database_url = os.getenv('FIREBASE_DATABASE_URL')
+    
     if firebase_service_account:
         # For deployment - service account from environment variable
-        import json
-        service_account_info = json.loads(firebase_service_account)
-        cred = credentials.Certificate(service_account_info)
+        try:
+            service_account_info = json.loads(firebase_service_account)
+            cred = credentials.Certificate(service_account_info)
+        except json.JSONDecodeError:
+            raise ValueError("FIREBASE_SERVICE_ACCOUNT environment variable contains invalid JSON")
     else:
         # For local development - service account from file
-        cred = credentials.Certificate("firebase-service-account.json")
+        service_account_path = "firebase-service-account.json"
+        if not os.path.exists(service_account_path):
+            raise FileNotFoundError(
+                f"Firebase service account file '{service_account_path}' not found. "
+                "For deployment, set FIREBASE_SERVICE_ACCOUNT environment variable with the JSON content. "
+                "For local development, ensure the service account file exists."
+            )
+        cred = credentials.Certificate(service_account_path)
+    
+    if not firebase_database_url:
+        raise ValueError(
+            "FIREBASE_DATABASE_URL environment variable is required. "
+            "Set it to your Firebase Realtime Database URL (e.g., https://your-project-id.firebaseio.com)"
+        )
     
     firebase_admin.initialize_app(cred, {
-        'databaseURL': os.getenv('FIREBASE_DATABASE_URL', 'https://your-project-id.firebaseio.com')
+        'databaseURL': firebase_database_url
     })
 
 # Get database reference
