@@ -7,8 +7,8 @@ import DataTable from './components/DataTable';
 import Statistics from './components/Statistics';
 import FileUpload from './components/FileUpload';
 
-// API base URL - change this to your Railway backend URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// API base URL - use relative path for Vercel deployment
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 function App() {
     const [data, setData] = useState([]);

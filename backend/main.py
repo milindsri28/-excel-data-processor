@@ -27,6 +27,7 @@ app.add_middleware(
         "https://*.onrender.com", # Render frontend
         "https://*.netlify.app",  # Netlify frontend
         "https://*.vercel.app",   # Vercel frontend
+        "https://*.railway.app",  # Railway frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -41,7 +42,7 @@ except ValueError:
     # Initialize Firebase with service account
     firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
     if firebase_service_account:
-        # For Railway deployment - service account from environment variable
+        # For deployment - service account from environment variable
         import json
         service_account_info = json.loads(firebase_service_account)
         cred = credentials.Certificate(service_account_info)
@@ -310,6 +311,7 @@ async def get_active_sessions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving session info: {str(e)}")
 
+# For Vercel serverless deployment
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) 
