@@ -21,7 +21,12 @@ app = FastAPI(title="Excel Data Processor", version="1.0.0")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://*.railway.app",  # Railway frontend
+        "https://*.netlify.app",  # Netlify frontend
+        "https://*.vercel.app",   # Vercel frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,7 +38,16 @@ try:
     firebase_admin.get_app()
 except ValueError:
     # Initialize Firebase with service account
-    cred = credentials.Certificate("firebase-service-account.json")
+    firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
+    if firebase_service_account:
+        # For Railway deployment - service account from environment variable
+        import json
+        service_account_info = json.loads(firebase_service_account)
+        cred = credentials.Certificate(service_account_info)
+    else:
+        # For local development - service account from file
+        cred = credentials.Certificate("firebase-service-account.json")
+    
     firebase_admin.initialize_app(cred, {
         'databaseURL': os.getenv('FIREBASE_DATABASE_URL', 'https://your-project-id.firebaseio.com')
     })

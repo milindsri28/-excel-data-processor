@@ -7,6 +7,9 @@ import DataTable from './components/DataTable';
 import Statistics from './components/Statistics';
 import FileUpload from './components/FileUpload';
 
+// API base URL - change this to your Railway backend URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 function App() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -18,7 +21,7 @@ function App() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get('/data');
+            const response = await axios.get(`${API_BASE_URL}/data`);
             setData(response.data.data || []);
         } catch (err) {
             setError('Failed to fetch data. Please try again.');
@@ -43,7 +46,7 @@ function App() {
         formData.append('file', file);
 
         try {
-            const response = await axios.post('/upload-excel', formData, {
+            const response = await axios.post(`${API_BASE_URL}/upload-excel`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -64,7 +67,7 @@ function App() {
         if (window.confirm('Are you sure you want to clear all data?')) {
             setLoading(true);
             try {
-                await axios.delete('/data');
+                await axios.delete(`${API_BASE_URL}/data`);
                 setData([]);
                 setSuccess('All data cleared successfully.');
             } catch (err) {
