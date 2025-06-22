@@ -11,7 +11,7 @@ A simple web application to upload Excel files and view data in a browser. Built
 
 ## Live Demo
 
-- **App**: https://creative-puffpuff-5a6348.netlify.app
+- **App**: https://excel-data-viewerr.netlify.app/
 - **API**: https://excel-data-processor-production.up.railway.app
 
 ## Tech Stack
